@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>P5R 토큰 박스 시뮬레이터</title>
+<style>
+    body {
+        background-color: #1e1f26;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 20px;
+    }
+
+    h1 { margin-bottom: 30px; }
+
+    .button-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .gacha-btn {
+        background: #2c2f3a;
+        border-radius: 10px;
+        padding: 20px;
+        width: 180px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .gacha-btn:hover {
+        transform: scale(1.05);
+        background: #3a3f4d;
+    }
+
+    .result-box {
+        background: #2c2f3a;
+        padding: 20px;
+        border-radius: 10px;
+        width: 420px;
+        margin: 0 auto 20px;
+    }
+
+    .log-box {
+        background: #111217;
+        padding: 15px;
+        border-radius: 10px;
+        width: 700px;
+        margin: 0 auto;
+        height: 260px;
+        overflow-y: auto;
+        text-align: left;
+        font-size: 14px;
+    }
+
+    button {
+        margin-top: 10px;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        background: #ff4c4c;
+        color: white;
+        font-weight: bold;
+    }
+
+    button:hover { background: #ff2a2a; }
+</style>
+</head>
+<body>
+
+<h1>📦 P5R 콜라보 토큰 박스 시뮬레이터</h1>
+
+<!-- 구매 버튼 -->
+<div class="button-container">
+    <div class="gacha-btn" onclick="buyBoxes(1)">
+        📦 1개 구매<br>(₩1,400)
+    </div>
+
+    <div class="gacha-btn" onclick="buyBoxes(5)">
+        📦 5개 구매<br>(₩6,000)
+    </div>
+
+    <div class="gacha-btn" onclick="buyBoxes(10)">
+        📦 10개 구매<br>(₩10,900)
+    </div>
+
+    <div class="gacha-btn" onclick="buyBoxes(50)">
+        📦 50개 구매<br>(₩52,500)
+    </div>
+</div>
+
+<!-- 가챠 버튼 -->
+<div class="button-container">
+    <div class="gacha-btn" onclick="openBox(1)">
+        🎯 1챠
+    </div>
+
+    <div class="gacha-btn" onclick="openBox(10)">
+        🔟 10챠
+    </div>
+</div>
+
+<!-- 상태창 -->
+<div class="result-box">
+    <h3>📊 현재 상태</h3>
+    <p id="money">총 사용 금액: 0원</p>
+    <p id="tokens">총 획득 토큰: 0 / 1080</p>
+    <p id="opened">총 개봉 상자: 0개</p>
+    <p id="remain">남은 상자: 0개</p>
+    <button onclick="reset()">초기화</button>
+</div>
+
+<!-- 로그 -->
+<div class="log-box" id="log"></div>
+
+<script>
+    const rewards = [
+        { token: 100, prob: 0.01 },
+        { token: 50, prob: 0.03 },
+        { token: 30, prob: 0.05 },
+        { token: 20, prob: 0.05 },
+        { token: 10, prob: 0.10 },
+        { token: 5, prob: 0.20 },
+        { token: 3, prob: 0.35 },
+        { token: 1, prob: 0.21 }
+    ];
+
+    let totalMoney = 0;
+    let totalTokens = 0;
+    let totalOpened = 0;
+    let remainingBoxes = 0;
+
+    const priceTable = {
+        1: 1400,
+        5: 6000,
+        10: 10900,
+        50: 52500
+    };
+
+    function randomReward() {
+        let r = Math.random();
+        let acc = 0;
+        for (let item of rewards) {
+            acc += item.prob;
+            if (r <= acc) return item.token;
+        }
+        return 1;
+    }
+
+    function buyBoxes(count) {
+
+        totalMoney += priceTable[count];
+        remainingBoxes += count;
+
+        document.getElementById("log").innerHTML += 
+            `💳 상자 ${count}개 구매 → ${priceTable[count].toLocaleString()}원<br>`;
+
+        updateUI();
+    }
+
+    function openBox(count) {
+
+        if (remainingBoxes < count) {
+            alert("❗ 상자가 부족해. 먼저 상자를 구매해줘.");
+            return;
+        }
+
+        const log = document.getElementById("log");
+
+        for (let i = 0; i < count; i++) {
+
+            totalOpened++;
+            remainingBoxes--;
+
+            let reward = randomReward();
+            totalTokens += reward;
+
+            log.innerHTML += 
+                `📦 ${totalOpened}번째 상자 → 토큰 ${reward}개<br>`;
+
+            if (totalOpened % 50 === 0) {
+                totalTokens += 100;
+                log.innerHTML += 
+                    `🎉 ${totalOpened}번째 보너스 → +100 토큰<br>`;
+            }
+        }
+
+        updateUI();
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function updateUI() {
+        document.getElementById("money").innerText =
+            "총 사용 금액: " + totalMoney.toLocaleString() + "원";
+
+        document.getElementById("tokens").innerText =
+            "총 획득 토큰: " + totalTokens + " / 1080";
+
+        document.getElementById("opened").innerText =
+            "총 개봉 상자: " + totalOpened + "개";
+
+        document.getElementById("remain").innerText =
+            "남은 상자: " + remainingBoxes + "개";
+    }
+
+    function reset() {
+        totalMoney = 0;
+        totalTokens = 0;
+        totalOpened = 0;
+        remainingBoxes = 0;
+
+        document.getElementById("money").innerText = "총 사용 금액: 0원";
+        document.getElementById("tokens").innerText = "총 획득 토큰: 0 / 1080";
+        document.getElementById("opened").innerText = "총 개봉 상자: 0개";
+        document.getElementById("remain").innerText = "남은 상자: 0개";
+        document.getElementById("log").innerHTML = "";
+    }
+</script>
+
+</body>
+</html>
